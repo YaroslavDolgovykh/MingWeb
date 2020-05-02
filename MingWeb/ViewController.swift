@@ -12,6 +12,7 @@ import WebKit
 private struct Constants {
     static let deviceWidthParameterName = "device_width"
     static let deviceHeightParameterName = "device_height"
+    static let baseURL = "https://www.mingming.io"
 }
 
 class ViewController: UIViewController, WKNavigationDelegate {
@@ -26,7 +27,7 @@ class ViewController: UIViewController, WKNavigationDelegate {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        if let url = URL(string: "https://www.mingming.io") {
+        if let url = URL(string: Constants.baseURL) {
             guard let modifyURL = SupportManager.addWebViewFrameToURL(url: url, frame: webView.frame) else { return }
             let urlRequest = URLRequest(url: modifyURL)
             webView.load(urlRequest)
@@ -49,7 +50,8 @@ class ViewController: UIViewController, WKNavigationDelegate {
             let urlRequest = URLRequest(url: modifyURL)
             webView.load(urlRequest)
         } else {
-            print("not a user click")
+            
+            print("not a user click - \(navigationAction.request.url)")
             decisionHandler(.allow)
         }
     }
