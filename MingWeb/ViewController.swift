@@ -9,6 +9,11 @@
 import UIKit
 import WebKit
 
+private struct Constants {
+    static let deviceWidthParameterName = "device_width"
+    static let deviceHeightParameterName = "device_height"
+}
+
 class ViewController: UIViewController, WKNavigationDelegate {
 
     @IBOutlet weak var webView: WKWebView!
@@ -16,31 +21,53 @@ class ViewController: UIViewController, WKNavigationDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         webView.navigationDelegate = self
+        
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
         if let url = URL(string: "https://www.mingming.io") {
-            let urlRequest = URLRequest(url: url)
+            guard let modifyURL = SupportManager.addWebViewFrameToURL(url: url, frame: webView.frame) else { return }
+            let urlRequest = URLRequest(url: modifyURL)
             webView.load(urlRequest)
+            print(modifyURL)
         }
     }
     
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if navigationAction.navigationType == .linkActivated  {
-            if let url = navigationAction.request.url,
-                let host = url.host, !host.hasPrefix("mingming.io"),
-                UIApplication.shared.canOpenURL(url) {
-                UIApplication.shared.open(url)
-                print(url)
-                print("Redirected to browser. No need to open it locally")
+            guard let url = navigationAction.request.url else {
                 decisionHandler(.cancel)
-            } else {
-                print("Open it locally")
-                decisionHandler(.allow)
+                return
             }
+            guard let modifyURL = SupportManager.addWebViewFrameToURL(url: url, frame: webView.frame) else {
+                decisionHandler(.cancel)
+                return
+            }
+            print(modifyURL)
+            decisionHandler(.cancel)
+            let urlRequest = URLRequest(url: modifyURL)
+            webView.load(urlRequest)
         } else {
             print("not a user click")
             decisionHandler(.allow)
         }
     }
-
-
 }
+
+class SupportManager {
+    class func addWebViewFrameToURL(url: URL, frame: CGRect) -> URL? {
+        guard var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true) else { return nil }
+        let queryItemWidth = URLQueryItem(name: Constants.deviceWidthParameterName, value: String(Int(frame.width)))
+        let queryItemHeight = URLQueryItem(name: Constants.deviceHeightParameterName, value: String(Int(frame.height)))
+        if urlComponents.queryItems != nil {
+            urlComponents.queryItems! += [queryItemWidth, queryItemHeight]
+        } else {
+            urlComponents.queryItems = [queryItemWidth, queryItemHeight]
+        }
+        guard let tmpURL = urlComponents.url else { return nil }
+        return tmpURL
+    }
+}
+
 
