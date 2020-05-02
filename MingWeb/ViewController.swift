@@ -57,16 +57,21 @@ class ViewController: UIViewController, WKNavigationDelegate {
 
 class SupportManager {
     class func addWebViewFrameToURL(url: URL, frame: CGRect) -> URL? {
-        guard var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true) else { return nil }
-        let queryItemWidth = URLQueryItem(name: Constants.deviceWidthParameterName, value: String(Int(frame.width)))
-        let queryItemHeight = URLQueryItem(name: Constants.deviceHeightParameterName, value: String(Int(frame.height)))
-        if urlComponents.queryItems != nil {
-            urlComponents.queryItems! += [queryItemWidth, queryItemHeight]
+        if url.absoluteString.contains(Constants.deviceWidthParameterName) &&
+            url.absoluteString.contains(Constants.deviceHeightParameterName) {
+            return url
         } else {
-            urlComponents.queryItems = [queryItemWidth, queryItemHeight]
+            guard var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: true) else { return nil }
+            let queryItemWidth = URLQueryItem(name: Constants.deviceWidthParameterName, value: String(Int(frame.width)))
+            let queryItemHeight = URLQueryItem(name: Constants.deviceHeightParameterName, value: String(Int(frame.height)))
+            if urlComponents.queryItems != nil {
+                urlComponents.queryItems! += [queryItemWidth, queryItemHeight]
+            } else {
+                urlComponents.queryItems = [queryItemWidth, queryItemHeight]
+            }
+            guard let tmpURL = urlComponents.url else { return nil }
+            return tmpURL
         }
-        guard let tmpURL = urlComponents.url else { return nil }
-        return tmpURL
     }
 }
 
